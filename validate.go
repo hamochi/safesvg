@@ -3,6 +3,7 @@ package safesvg
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"io"
 	"strings"
 )
@@ -256,19 +257,19 @@ var svg_attributes = map[string]struct{}{
 }
 
 // ValidateBytes validates a slice of bytes containing the svg data
-func ValidateBytes(b []byte) (bool, error) {
+func ValidateBytes(b []byte) error {
 	r := bytes.NewReader(b)
 	return ValidateReader(r)
 }
 
 // ValidateString validates a string containing the svg data
-func ValidateString(s string) (bool, error) {
+func ValidateString(s string) error {
 	r := strings.NewReader(s)
 	return ValidateReader(r)
 }
 
 // ValidateReader validates svg data from a io.Reader interface
-func ValidateReader(r io.Reader) (bool, error) {
+func ValidateReader(r io.Reader) error {
 	t := xml.NewDecoder(r)
 	var to xml.Token
 	var err error
@@ -279,15 +280,15 @@ func ValidateReader(r io.Reader) (bool, error) {
 		switch v := to.(type) {
 		case xml.StartElement:
 			if ok := validElements(v.Name.Local); !ok {
-				return false, nil
+				return errors.New("Invalid element " + v.Name.Local)
 			}
 
-			if ok := validAttributes(v.Attr); !ok {
-				return false, nil
+			if err := validAttributes(v.Attr); err != nil {
+				return err
 			}
 		case xml.EndElement:
 			if ok := validElements(v.Name.Local); !ok {
-				return false, nil
+				return errors.New("Invalid element " + v.Name.Local)
 			}
 		case xml.CharData: //text
 
@@ -303,21 +304,47 @@ func ValidateReader(r io.Reader) (bool, error) {
 			if err.Error() == "EOF" {
 				break
 			} else {
-				return false, err
+				return err
 			}
 		}
 
 	}
 
-	return true, nil
+	return nil
 }
 
-func validAttributes(attrs []xml.Attr) bool {
-	for _, attr := range attrs {
-		_, found := svg_attributes[attr.Name.Local]
-		return found
+func WhitelistElements(elements ...string) {
+	for _, elemet := range elements {
+		svg_elements[elemet] = struct{}{}
 	}
-	return false
+}
+
+func WhitelistAttributes(attributes ...string) {
+	for _, attr := range attributes {
+		svg_attributes[attr] = struct{}{}
+	}
+}
+
+func BlacklistElements(elements ...string) {
+	for _, elemet := range elements {
+		delete(svg_elements, elemet)
+	}
+}
+
+func BlacklistAttributes(attributes ...string) {
+	for _, attr := range attributes {
+		delete(svg_attributes, attr)
+	}
+}
+
+func validAttributes(attrs []xml.Attr) error {
+	for _, attr := range attrs {
+		_, found := svg_attributes[strings.ToLower(attr.Name.Local)]
+		if !found {
+			return errors.New("Invalid attribute " + attr.Name.Local)
+		}
+	}
+	return nil
 }
 
 func validElements(elm string) bool {
