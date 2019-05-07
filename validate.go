@@ -254,6 +254,12 @@ var svg_attributes = map[string]struct{}{
 	"y2":                          {},
 	"z":                           {},
 	"zoomandpan":                  {},
+
+	"xlink:href":  {},
+	"xml:id":      {},
+	"xlink:title": {},
+	"xml:space":   {},
+	"xmlns:xlink": {},
 }
 
 // ValidateBytes validates a slice of bytes containing the svg data

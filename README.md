@@ -36,4 +36,4 @@ if err != nil {
 ```
 
 ### Credits
-This library is inspired by https://github.com/cure53/DOMPurify
+The white list is copied from https://github.com/cure53/DOMPurify
