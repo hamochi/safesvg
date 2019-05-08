@@ -344,8 +344,17 @@ func BlacklistAttributes(attributes ...string) {
 }
 
 func validAttributes(attrs []xml.Attr) error {
+	var key string
 	for _, attr := range attrs {
-		_, found := svg_attributes[strings.ToLower(attr.Name.Local)]
+		if attr.Name.Space != "" {
+			if attr.Name.Space == "http://www.w3.org/XML/1998/namespace" {
+				attr.Name.Space = "xml"
+			}
+			key = attr.Name.Space + ":" + attr.Name.Local
+		} else {
+			key = attr.Name.Local
+		}
+		_, found := svg_attributes[strings.ToLower(key)]
 		if !found {
 			return errors.New("Invalid attribute " + attr.Name.Local)
 		}
