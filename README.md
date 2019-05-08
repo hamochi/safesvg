@@ -1,7 +1,7 @@
 # Safesvg
 A Go library that will check if a given svg file is safe based on a whitelist of elements and attributes. This library does not sanitize svg files.
 
-##### Word of caution
+#### Word of caution
 Using unsafe svg can be extremely dangerous. This library will not mitigate that risk. Please do your own research about svg security and risks before using this library.  
 
 ## Usage
