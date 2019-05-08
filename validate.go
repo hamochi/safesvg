@@ -262,20 +262,28 @@ var svg_attributes = map[string]struct{}{
 	"xmlns:xlink": {},
 }
 
-// ValidateBytes validates a slice of bytes containing the svg data
-func ValidateBytes(b []byte) error {
-	r := bytes.NewReader(b)
-	return ValidateReader(r)
+type Validator struct {
+	whiteListElements   map[string]struct{}
+	whiteListAttributes map[string]struct{}
 }
 
-// ValidateString validates a string containing the svg data
-func ValidateString(s string) error {
-	r := strings.NewReader(s)
-	return ValidateReader(r)
+// Validate validates a slice of bytes containing the svg data
+func NewValidator() Validator {
+	vld := Validator{
+		whiteListElements:   svg_elements,
+		whiteListAttributes: svg_attributes,
+	}
+	return vld
+}
+
+// Validate validates a slice of bytes containing the svg data
+func (vld Validator) Validate(b []byte) error {
+	r := bytes.NewReader(b)
+	return vld.ValidateReader(r)
 }
 
 // ValidateReader validates svg data from a io.Reader interface
-func ValidateReader(r io.Reader) error {
+func (vld Validator) ValidateReader(r io.Reader) error {
 	t := xml.NewDecoder(r)
 	var to xml.Token
 	var err error
@@ -285,15 +293,15 @@ func ValidateReader(r io.Reader) error {
 
 		switch v := to.(type) {
 		case xml.StartElement:
-			if ok := validElements(v.Name.Local); !ok {
+			if ok := validElements(v.Name.Local, vld.whiteListElements); !ok {
 				return errors.New("Invalid element " + v.Name.Local)
 			}
 
-			if err := validAttributes(v.Attr); err != nil {
+			if err := validAttributes(v.Attr, vld.whiteListAttributes); err != nil {
 				return err
 			}
 		case xml.EndElement:
-			if ok := validElements(v.Name.Local); !ok {
+			if ok := validElements(v.Name.Local, vld.whiteListElements); !ok {
 				return errors.New("Invalid element " + v.Name.Local)
 			}
 		case xml.CharData: //text
@@ -319,31 +327,31 @@ func ValidateReader(r io.Reader) error {
 	return nil
 }
 
-func WhitelistElements(elements ...string) {
+func (vld Validator) WhitelistElements(elements ...string) {
 	for _, elemet := range elements {
-		svg_elements[elemet] = struct{}{}
+		vld.whiteListElements[elemet] = struct{}{}
 	}
 }
 
-func WhitelistAttributes(attributes ...string) {
+func (vld Validator) WhitelistAttributes(attributes ...string) {
 	for _, attr := range attributes {
-		svg_attributes[attr] = struct{}{}
+		vld.whiteListAttributes[attr] = struct{}{}
 	}
 }
 
-func BlacklistElements(elements ...string) {
+func (vld Validator) BlacklistElements(elements ...string) {
 	for _, elemet := range elements {
-		delete(svg_elements, elemet)
+		delete(vld.whiteListElements, elemet)
 	}
 }
 
-func BlacklistAttributes(attributes ...string) {
+func (vld Validator) BlacklistAttributes(attributes ...string) {
 	for _, attr := range attributes {
-		delete(svg_attributes, attr)
+		delete(vld.whiteListAttributes, attr)
 	}
 }
 
-func validAttributes(attrs []xml.Attr) error {
+func validAttributes(attrs []xml.Attr, whiteListAttributes map[string]struct{}) error {
 	var key string
 	for _, attr := range attrs {
 		if attr.Name.Space != "" {
@@ -354,7 +362,7 @@ func validAttributes(attrs []xml.Attr) error {
 		} else {
 			key = attr.Name.Local
 		}
-		_, found := svg_attributes[strings.ToLower(key)]
+		_, found := whiteListAttributes[strings.ToLower(key)]
 		if !found {
 			return errors.New("Invalid attribute " + attr.Name.Local)
 		}
@@ -362,7 +370,7 @@ func validAttributes(attrs []xml.Attr) error {
 	return nil
 }
 
-func validElements(elm string) bool {
-	_, found := svg_elements[elm]
+func validElements(elm string, whiteListElements map[string]struct{}) bool {
+	_, found := whiteListElements[elm]
 	return found
 }
