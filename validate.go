@@ -262,12 +262,13 @@ var svg_attributes = map[string]struct{}{
 	"xmlns:xlink": {},
 }
 
+// Validator is a struct with private variables for storing the whitelists
 type Validator struct {
 	whiteListElements   map[string]struct{}
 	whiteListAttributes map[string]struct{}
 }
 
-// Validate validates a slice of bytes containing the svg data
+// NewValidator creates a new validator with default whitelists
 func NewValidator() Validator {
 	vld := Validator{
 		whiteListElements:   svg_elements,
@@ -282,7 +283,7 @@ func (vld Validator) Validate(b []byte) error {
 	return vld.ValidateReader(r)
 }
 
-// ValidateReader validates svg data from a io.Reader interface
+// ValidateReader validates svg data from an io.Reader interface
 func (vld Validator) ValidateReader(r io.Reader) error {
 	t := xml.NewDecoder(r)
 	var to xml.Token
@@ -327,24 +328,28 @@ func (vld Validator) ValidateReader(r io.Reader) error {
 	return nil
 }
 
+// WhitelistElements adds svg elements to the whitelist
 func (vld Validator) WhitelistElements(elements ...string) {
 	for _, elemet := range elements {
 		vld.whiteListElements[elemet] = struct{}{}
 	}
 }
 
+// WhitelistAttributes adds svg attributes to the whitelist
 func (vld Validator) WhitelistAttributes(attributes ...string) {
 	for _, attr := range attributes {
 		vld.whiteListAttributes[attr] = struct{}{}
 	}
 }
 
+// BlacklistElements removes svg elements from the whitelist
 func (vld Validator) BlacklistElements(elements ...string) {
 	for _, elemet := range elements {
 		delete(vld.whiteListElements, elemet)
 	}
 }
 
+// BlacklistAttributes removes svg attributes from the whitelist
 func (vld Validator) BlacklistAttributes(attributes ...string) {
 	for _, attr := range attributes {
 		delete(vld.whiteListAttributes, attr)
