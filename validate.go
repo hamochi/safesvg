@@ -329,28 +329,28 @@ func (vld Validator) ValidateReader(r io.Reader) error {
 }
 
 // WhitelistElements adds svg elements to the whitelist
-func (vld Validator) WhitelistElements(elements ...string) {
+func (vld *Validator) WhitelistElements(elements ...string) {
 	for _, elemet := range elements {
 		vld.whiteListElements[elemet] = struct{}{}
 	}
 }
 
 // WhitelistAttributes adds svg attributes to the whitelist
-func (vld Validator) WhitelistAttributes(attributes ...string) {
+func (vld *Validator) WhitelistAttributes(attributes ...string) {
 	for _, attr := range attributes {
 		vld.whiteListAttributes[attr] = struct{}{}
 	}
 }
 
 // BlacklistElements removes svg elements from the whitelist
-func (vld Validator) BlacklistElements(elements ...string) {
+func (vld *Validator) BlacklistElements(elements ...string) {
 	for _, elemet := range elements {
 		delete(vld.whiteListElements, elemet)
 	}
 }
 
 // BlacklistAttributes removes svg attributes from the whitelist
-func (vld Validator) BlacklistAttributes(attributes ...string) {
+func (vld *Validator) BlacklistAttributes(attributes ...string) {
 	for _, attr := range attributes {
 		delete(vld.whiteListAttributes, attr)
 	}
